@@ -6,11 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -61,6 +63,18 @@ func loadConfig(filename string) (*Config, error) {
 
 func main() {
 	flag.Parse()
+
+	// 从环境变量中获取配置下载链接
+	configUrl := os.Getenv("GO_FETCH_CONFIG_URL")
+	log.Printf("GO_FETCH_CONFIG_URL:%s\n", configUrl)
+	if configUrl != "" {
+		err := downloadFile(configUrl, configPath)
+		if err != nil {
+			log.Fatalf("下载配置文件失败: %v", err)
+			return
+		}
+	}
+
 	config, err := loadConfig(configPath)
 	if err != nil {
 		log.Fatalf("加载配置文件失败: %v", err)
@@ -180,4 +194,40 @@ func isSkipHeader(header string) bool {
 		}
 	}
 	return false
+}
+
+// 下载文件
+func downloadFile(url string, filePath string) error {
+	// 创建文件夹（如果不存在）
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("无法创建目录: %v", err)
+	}
+
+	// 创建文件
+	out, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("创建文件失败: %v", err)
+	}
+	defer out.Close()
+
+	// 获取数据
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("下载请求失败: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 检查服务器响应
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("下载失败，状态码: %d", resp.StatusCode)
+	}
+
+	// 写入文件
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("写入文件失败: %v", err)
+	}
+
+	return nil
 }
