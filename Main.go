@@ -65,7 +65,7 @@ func main() {
 	flag.Parse()
 
 	configJson := os.Getenv("GO_FETCH_CONFIG_JSON")
-	log.Printf("GO_FETCH_CONFIG_JSON:%s\n", configJson)
+	log.Printf("GO_FETCH_CONFIG_JSON: %s\n", configJson)
 	// 如果环境变量中有配置JSON，直接解析
 	if configJson != "" {
 		err := json.Unmarshal([]byte(configJson), &config)
@@ -75,7 +75,7 @@ func main() {
 	} else {
 		// 从环境变量中获取配置下载链接
 		configUrl := os.Getenv("GO_FETCH_CONFIG_URL")
-		log.Printf("GO_FETCH_CONFIG_URL:%s\n", configUrl)
+		log.Printf("GO_FETCH_CONFIG_URL: %s\n", configUrl)
 		if configUrl != "" {
 			err := downloadFile(configUrl, configPath)
 			if err != nil {
@@ -91,8 +91,8 @@ func main() {
 
 	http.HandleFunc(config.Path, fetchHandler)
 
-	log.Printf("secret :%s", config.Secret)
-	log.Printf("whiteListDomains :%s", config.WhiteListDomains)
+	log.Printf("secret: %s", config.Secret)
+	log.Printf("whiteListDomains: %s", config.WhiteListDomains)
 	log.Printf("服务启动，监听 http://0.0.0.0:%s%s", config.Port, config.Path)
 	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
 		log.Fatal("ListenAndServe 出错: ", err)
