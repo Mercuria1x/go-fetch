@@ -49,35 +49,45 @@ type Config struct {
 	WhiteListDomains []string `json:"whiteListDomains"`
 }
 
-func loadConfig(filename string) (*Config, error) {
+func loadConfigFile(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &config, nil
+	return nil
 }
 
 func main() {
 	flag.Parse()
 
-	// 从环境变量中获取配置下载链接
-	configUrl := os.Getenv("GO_FETCH_CONFIG_URL")
-	log.Printf("GO_FETCH_CONFIG_URL:%s\n", configUrl)
-	if configUrl != "" {
-		err := downloadFile(configUrl, configPath)
-		if err != nil {
-			log.Fatalf("下载配置文件失败: %v", err)
-			return
-		}
-	}
+	configJson := os.Getenv("GO_FETCH_CONFIG_JSON")
 
-	config, err := loadConfig(configPath)
-	if err != nil {
-		log.Fatalf("加载配置文件失败: %v", err)
+	// 如果环境变量中有配置JSON，直接解析
+	if configJson != "" {
+		log.Printf("GO_FETCH_CONFIG_JSON:%s\n", configJson)
+		err := json.Unmarshal([]byte(configJson), &config)
+		if err != nil {
+			log.Fatalf("解析环境变量中的配置失败: %v", err)
+		}
+	} else {
+		// 从环境变量中获取配置下载链接
+		configUrl := os.Getenv("GO_FETCH_CONFIG_URL")
+		log.Printf("GO_FETCH_CONFIG_URL:%s\n", configUrl)
+		if configUrl != "" {
+			err := downloadFile(configUrl, configPath)
+			if err != nil {
+				log.Printf("下载配置文件失败: %v\n", err)
+				return
+			}
+		}
+		err := loadConfigFile(configPath)
+		if err != nil {
+			log.Fatalf("加载配置文件失败: %v", err)
+		}
 	}
 
 	http.HandleFunc(config.Path, fetchHandler)
