@@ -65,10 +65,9 @@ func main() {
 	flag.Parse()
 
 	configJson := os.Getenv("GO_FETCH_CONFIG_JSON")
-
+	log.Printf("GO_FETCH_CONFIG_JSON:%s\n", configJson)
 	// 如果环境变量中有配置JSON，直接解析
 	if configJson != "" {
-		log.Printf("GO_FETCH_CONFIG_JSON:%s\n", configJson)
 		err := json.Unmarshal([]byte(configJson), &config)
 		if err != nil {
 			log.Fatalf("解析环境变量中的配置失败: %v", err)
